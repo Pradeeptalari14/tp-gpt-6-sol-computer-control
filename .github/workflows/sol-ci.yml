@@ -1,0 +1,32 @@
+name: GPT-6.1 Sol CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-sol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          pip install openai pytest flake8
+      - name: Syntax & Lint Check
+        run: |
+          python -m py_compile gpt6_sol_agent.py computer_control_loop.py
+          flake8 gpt6_sol_agent.py computer_control_loop.py --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 gpt6_sol_agent.py computer_control_loop.py --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
+      - name: Run Smoke Test
+        run: |
+          python gpt6_sol_agent.py
+          python computer_control_loop.py
+      - name: Validate Scripts
+        run: |
+          bash scripts/validate.sh --dry-run

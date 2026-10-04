@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gpt6-sol-sandbox
+  namespace: ai-sandboxes
+  labels:
+    app: gpt6-sol
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gpt6-sol
+  template:
+    metadata:
+      labels:
+        app: gpt6-sol
+    spec:
+      runtimeClassName: gvisor-runsc
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: sol-runner
+          image: ghcr.io/pradeeptalari14/gpt-6-sol-sandbox:latest
+          command: ["python3", "gpt6_sol_agent.py"]
+          resources:
+            limits:
+              memory: 8Gi
+              cpu: "4"
+            requests:
+              memory: 2Gi
+              cpu: "1"
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-credentials
+                  key: api-key
+            - name: WORKSPACE_DIR
+              value: "/tmp/sandbox"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
